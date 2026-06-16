@@ -1,3 +1,8 @@
+:- source_location(FilePath, _),
+   file_directory_name(FilePath, Dir),
+   directory_file_path(Dir, 'basic_xy_algebra.prolog', AlgebraPath),
+   consult(AlgebraPath).
+
 range(Low, High, []) :-
     Low > High.
 range(Low, High, [Low|Rest]) :-
@@ -180,3 +185,104 @@ clear_red_tiles :-
     borderType(Id1, Id2, 'Row'),
     tile(red, Id1, C1, R),
     tile(red, Id2, C2, R).
+
+line_segment([CWest, _], [CEast, _]) :-
+    CWest =< CEast.
+
+to_line_segment([C1,R1], 
+		[C2,R2], 
+		LineSegment
+		) :-
+     ground([[C1,R1], [C2,R2]]),
+    (
+     (line_segment([C1,R1], [C2,R2])) -> (LineSegment = line_segment([C1,R1], [C2,R2])) ;
+     (line_segment([C2,R2], [C1,R1])) -> (LineSegment = line_segment([C2,R2], [C1,R1]))
+    ).
+
+magnitude(LineSegment, Mag) :-
+    line_segment([Cw,Rw],[Ce,Re]) = LineSegment,
+    Mag is sqrt(((Ce - Cw) ^ 2) + ((Re - Rw) ^ 2)).
+
+infinite_line(LineSegment, Precision) :-
+    ground(Precision),
+    magnitude(LineSegment, Mag),
+    Error is abs(1 - Mag),
+    Error < Precision.
+
+infinite_line(LineSegment, Precision) :-
+    var(Precision),
+    magnitude(LineSegment, Mag),
+    Precision is abs(1 - Mag).
+
+to_infinite_line(LineSegment, 
+		 infinite_line(line_segment([Cwu,Rwu],[Ceu,Reu]),
+			       Error
+				)
+		) :-
+   ground(LineSegment),
+   line_segment([Cw,Rw],[Ce,Re]) = LineSegment,
+   magnitude(LineSegment, Mag),
+   Cwu is Cw / Mag,
+   Ceu is Ce / Mag,
+   Rwu is Rw / Mag,
+   Reu is Re / Mag,
+   infinite_line(line_segment([Cwu,Rwu],[Ceu,Reu]),
+			       Error
+				).
+
+to_infinite_line(LineSegment, 
+		 ILine
+		) :-
+   ground(ILine),
+   ILine = infinite_line(LineSegment, _).
+
+gradient(LineSegment, Grad) :-
+    ground(LineSegment),
+    line_segment([Cw,Rw],[Ce,Re]) = LineSegment,
+    Rise is Ce - Cw,
+    Run is Re - Rw,
+    Run =\= 0.0,
+    Grad is Rise / Run.
+
+gradient(ILine, Grad) :-
+    ground(ILine),
+    to_infinite_line(LineSegment, 
+		 ILine
+		),
+    gradient(LineSegment, Grad).
+    
+
+to_formula(infinite_line(LineSegment, _), Formula) :-
+   ground(LineSegment),
+   gradient(LineSegment, B),
+   B =\= 0.0,
+   NegB is 0 - B,
+   line_segment([X,NegY],_) = LineSegment,
+   Const is (0 - NegY) - (B*X),
+   NegConst is 0 - Const,
+   Formula = '='(y,'+'('*'(NegB,x),NegConst)).
+
+to_formula(infinite_line(LineSegment, _), Formula) :-
+   ground(LineSegment),
+   gradient(LineSegment, B),
+   B =:= 0.0,
+   line_segment([_,NegY],_) = LineSegment,
+   Const is (0 - NegY),
+   NegConst is 0 - Const,
+   Formula = '='(y,NegConst).
+
+to_formula(infinite_line(line_segment([0,R],[1,R]),_), '='(x,R)) :-
+   ground(R).
+to_formula(ILine, '='(x,R)) :-
+   ground(ILine),
+   ILine = infinite_line(line_segment([_,R],[_,R]),_).
+
+to_formula(ILine, '='(y,'+'('*'(NegB,x),NegConst))) :-
+   ground([NegB, NegConst]),
+   Cw is 0 - NegConst,
+   Re is 0 - NegB,
+   LineSegment =line_segment([Cw, 0],[1, Re]),
+   to_infinite_line(LineSegment, 
+		 ILine
+		).
+
