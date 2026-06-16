@@ -1,18 +1,18 @@
 formula_intersection(x=X, y=Y, X, Y) :- number(X), number(Y).
 formula_intersection(y=Y, x=X, X, Y):- number(X), number(Y).
-formula_intersection('='(y,'+'('*'(NegB,x),NegConst)), x=X, 
+formula_intersection('='(y,'+'('*'(B,x),Const)), x=X, 
 	X, Y) :-
-    Y is (NegB * X) + NegConst,
+    Y is (B * X) + Const,
     number(Y).
 formula_intersection(x=X, 
-	'='(y,'+'('*'(NegB,x),NegConst)), 
+	'='(y,'+'('*'(B,x),Const)), 
 	X, Y) :-
-    Y is '+'('*'(NegB,X),NegConst),
+    Y is '+'('*'(B,X),Const),
     number(Y).
-formula_intersection(y = NegBLHS*x + NegConstLHS, 
-	y = NegBRHS*x + NegConstRHS, 
+formula_intersection(y = BLHS*x + ConstLHS, 
+	y = BRHS*x + ConstRHS, 
 	X, Y) :-
-    X is (NegConstLHS - NegConstRHS) / (NegBLHS - NegBRHS),
-    Y is (NegBLHS*X) + NegConstLHS,
+    X is (ConstLHS - ConstRHS) / (BLHS - BRHS),
+    Y is (BLHS*X) + ConstLHS,
     number(X),
     number(Y).
