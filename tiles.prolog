@@ -252,7 +252,7 @@ gradient(ILine, Grad) :-
     gradient(LineSegment, Grad).
     
 
-to_formula(infinite_line(LineSegment, _), Formula) :-
+to_formula(infinite_line(LineSegment, _), Formula, (neginf<x)<inf, (neginf<y)<inf) :-
    ground(LineSegment),
    gradient(LineSegment, B),
    B =\= 0.0,
@@ -262,7 +262,7 @@ to_formula(infinite_line(LineSegment, _), Formula) :-
    NegConst is 0 - Const,
    Formula = '='(y,'+'('*'(NegB,x),NegConst)).
 
-to_formula(infinite_line(LineSegment, _), Formula) :-
+to_formula(infinite_line(LineSegment, _), Formula, (neginf<x)<inf, (neginf<y)<inf) :-
    ground(LineSegment),
    gradient(LineSegment, B),
    B =:= 0.0,
@@ -271,13 +271,14 @@ to_formula(infinite_line(LineSegment, _), Formula) :-
    NegConst is 0 - Const,
    Formula = '='(y,NegConst).
 
-to_formula(infinite_line(line_segment([0,R],[1,R]),_), '='(x,R)) :-
+to_formula(infinite_line(line_segment([0,R],[1,R]),_), '='(x,R), (R=<x)=<R, (neginf<y)<inf) :-
    ground(R).
-to_formula(ILine, '='(x,R)) :-
+
+to_formula(ILine, '='(x,R), (R=<x)=<R, (neginf<y)<inf) :-
    ground(ILine),
    ILine = infinite_line(line_segment([_,R],[_,R]),_).
 
-to_formula(ILine, '='(y,'+'('*'(NegB,x),NegConst))) :-
+to_formula(ILine, '='(y,'+'('*'(NegB,x),NegConst)), (neginf<x)<inf, (neginf<y)<inf) :-
    ground([NegB, NegConst]),
    Cw is 0 - NegConst,
    Re is 0 - NegB,
@@ -286,3 +287,24 @@ to_formula(ILine, '='(y,'+'('*'(NegB,x),NegConst))) :-
 		 ILine
 		).
 
+to_formula(LineSeg, ILFormula, ConstraintX, ConstraintY) :-
+   ground(LineSeg),
+   LineSeg = line_segment([Cw,Rw], [Ce,Re]),
+   to_infinite_line(LineSeg, ILine),
+   to_formula(ILine, ILFormula, _, _),
+   ConstraintX = ((Cw=<x)=<Ce),
+   ConstraintY = ((Re=<y)=<Rw).
+   
+connectionToLineSegment(Id1, Id2, LineSegment) :-
+   tile_connected(Color, Id1, Id2),
+   tile(Color, Id1, C1, R1),
+   tile(Color, Id2, C2, R2),
+   to_line_segment([C1,R1],[C2,R2], LineSegment).
+
+allConnections(Color, Sorted) :-
+   findall([Id1, Id2], tile_connected(Color, Id1, Id2), List),
+   sort(List, Sorted).
+
+connection(Color, Conn) :-
+   allConnections(Color, Sorted),
+   member(Conn, Sorted).
