@@ -1,6 +1,6 @@
-formula_intersection(formula(x=X), formula(y=Y), X, Y) :- number(X), number(Y).
-formula_intersection(formula(y=Y), formula(x=X), X, Y):- number(X), number(Y).
-formula_intersection(formula('='(y,'+'('*'(NegB,x),NegConst))), formula(x=X), 
+formula_intersection(x=X, y=Y, X, Y) :- number(X), number(Y).
+formula_intersection(y=Y, x=X, X, Y):- number(X), number(Y).
+formula_intersection('='(y,'+'('*'(NegB,x),NegConst)), x=X, 
 	X, Y) :-
     Y is (NegB * X) + NegConst,
     number(Y).
